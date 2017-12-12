@@ -2,15 +2,20 @@ pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
 p={}
+p.jumpup=3.8
+p.scounter=0
+p.clk=0
+p.animspd=4
 p.s=96
+p.flip=false
 p.x=10
 p.y=10
 p.w=1
 p.h=2
 p.up=0
 p.g=0.5
-p.maxfall=-6
-p.xspd=2
+p.maxfall=-2.2
+p.xspd=1
 
 function _init()
   palt(0,false)
@@ -23,23 +28,53 @@ function _draw()
 	-- p:draw()
 end
 
-function _update()    
+function drawdebug()
   cls(5)
   map(0,0,0,0,16,16)
   p:draw()
+end
+
+function _update()  
+  drawdebug()  
   p:move()
 end
 
 function p:draw()
-	spr(self.s,self.x,self.y,self.w,self.h)	
+   if(p.sstate==0)then
+    p.s=97+p.scounter
+    p.clk+=1
+    if(p.clk>p.animspd)then
+      p.scounter+=1
+      p.clk=0
+      if(p.scounter>2)p.scounter=0
+    end
+  end
+  if(p.sstate==1)p.s=97
+  if(p.sstate==-1)p.s=96
+  if(btn(1))then
+    p.flip=false
+  elseif(btn(0))then
+    p.flip=true
+  end
+  spr(self.s,self.x,self.y,self.w,self.h,p.flip)	
 end
 
 function p:move()
   --if(btn(1))p.x+=p.xspd
   --if(btn(0))p.x-=p.xspd
-  if(btn(1) and not p:collideleft())p.x+=p.xspd
-  if(btn(0) and not p:collideright())p.x-=p.xspd
-  
+  if(p:grounded())then
+    p.up=0
+    if(btn(0)or btn(1))p.sstate=0
+    if(btn(2))p.up=p.jumpup
+    if(not btn(0) and not btn(1))p.sstate=-1
+  else
+    p.sstate=1
+  end
+
+  if(btn(1) and not p:collideleft())then p.x+=p.xspd
+  elseif(btn(0) and not p:collideright())then p.x-=p.xspd
+  end
+
   if(p:collideright  ())p.x=flr(p.x/8)*8
   if(p:collideleft  ())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
   p:fall()
@@ -58,7 +93,7 @@ function p:collideleft()
     print(blfx,50,10,10)
     print(blfy,70,10,10)
     --print(lfx<rfx,70,30,10) 
-    pset(blfx,blfy,10)
+    --pset(blfx,blfy,10)
     tile=mget(blfx/8,blfy/8)
     if( fget(tile,0))then
       return true
@@ -82,7 +117,7 @@ function p:collideright()
     print(brfx,50,10,10)
     print(brfy,70,10,10)
     --print(lfx<rfx,70,30,10) 
-    pset(brfx,brfy,10)
+    --pset(brfx,brfy,10)
     tile=mget(brfx/8,brfy/8)
     if( fget(tile,0))then
       return true
@@ -95,11 +130,11 @@ end
 
 function p:fall()
   
-  if( not p:grounded() )then
+  --if( not p:grounded() )then
     self.up-=self.g
     if(self.up<self.maxfall)self.up=self.maxfall
     self.y-=self.up
-  end
+  --end
 
   if( p:grounded() ) then
     self.y=flr(self.y/8)*8
@@ -121,7 +156,7 @@ function p:grounded()
     -- print(lfx,50,10,10)
     -- print(rfx,70,10,10)
     -- print(lfx<rfx,70,30,10) 
-    pset(lfx,lfy,10)
+    --pset(lfx,lfy,10)
     tile=mget(lfx/8,lfy/8)
     if( fget(tile,0))then
       return true
@@ -180,22 +215,22 @@ bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb03030303080805080c0c050cbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb3030303080505080c05050c0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0303030305080808050c0c0cbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb303030305080808050c0c0c0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bb8888bbbbb8888bbbb8888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b888888bbb888888bb888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-8888888b7b888888bb888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-8777777bb887777778877777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7ff1f1fbbbff1f1fbbff1f1fbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b7ffef7bbb7ffef7bb7ffef7bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b777777bbb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b887778bb888777bb888777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-888878887787888888878877bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7700a0777700a0777700a077bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-778888778888887777888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b000000bb000000bb000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b0bbb0bb000bb0bbbb00bb0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b00bb00b00bbb00bb00b00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b000b0000bbbb000b000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bb8888bbbbb8888bbbb8888bbbb8888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b888888bbb888888bb888888bb888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+8888888b7b888888bb888888bb888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+8777777bb88777777887777778877777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7ff1f1fbbbff1f1fbbff1f1fbbff1f1fbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b7ffef7bbb7ffef7bb7ffef7bb7ffef7bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b777777bbb777777bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b887778bb888777bb888777b7788777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+88887888778788888887887777878888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7700a0777700a0777700a0770000a000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+77888877888888777788888888888877bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00000000000000000000000000000077bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+0000000bb000000bb000000bb000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+0bbbb0bb000bb0bbbb00bb0bb0bbb0b0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00bbb00b00bbb00bb00b00bb00bbbb00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+000bb0000bbbb000b000000b000bbb00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
