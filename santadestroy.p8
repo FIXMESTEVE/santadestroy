@@ -71,13 +71,15 @@ function p:move()
     p.sstate=1
   end
 
+  p:fall()
+  
   if(btn(1) and not p:collideleft())then p.x+=p.xspd
   elseif(btn(0) and not p:collideright())then p.x-=p.xspd
   end
 
   if(p:collideright  ())p.x=flr(p.x/8)*8
   if(p:collideleft  ())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
-  p:fall()
+
 end
 
 function p:collideleft()
@@ -156,7 +158,7 @@ function p:grounded()
     -- print(lfx,50,10,10)
     -- print(rfx,70,10,10)
     -- print(lfx<rfx,70,30,10) 
-    --pset(lfx,lfy,10)
+    pset(lfx,lfy,10)
     tile=mget(lfx/8,lfy/8)
     if( fget(tile,0))then
       return true
