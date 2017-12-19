@@ -18,199 +18,218 @@ p.g=0.5
 p.maxfall=-2.5
 p.xspd=1
 
+levels={
+	{{0,0},{20,9}}
+}
+
 function _init()
-  palt(0,false)
-  palt(11,true)
+	palt(0,false)
+	palt(11,true)
 end
 
 function _draw()
 	cls(5)
-	map(0,0,0,0,16,16)
+	loadlevel(1)
 	p:draw()
 end
 
 function drawdebug()
-  cls(5)
-  map(0,0,0,0,16,16)
-  p:draw()
+	cls(5)
+	loadlevel(1)
+	p:draw()
 end
 
-function _update()  
- --drawdebug()  
-  p:move()
+function _update()
+	--drawdebug()
+	p:move()
 end
 
 function p:draw()
-  if(p.sstate==1)p.s=97
-   if(p.sstate==-1)p.s=96
-   
-   if(p.sstate==0)tmp=97 
-   if(p.sstate==2)tmp=100 
-  
-   if(p.sstate==0 or p.sstate==2)then
-    if(p.sstate==0)then
-        if(p.scounter>2)p.scounter=0
-      end
-      if(p.sstate==2)then
-        if(p.scounter>1)p.scounter=0
-      end
+	if(p.sstate==1)p.s=97
+	if(p.sstate==-1)p.s=96
 
-    p.s=tmp+p.scounter
-    p.clk+=1
-    if(p.clk>p.animspd)then
-      p.scounter+=1
-      p.clk=0
+	if(p.sstate==0)tmp=97
+	if(p.sstate==2)tmp=100
 
-    end
-  end
-  if(btn(1))then
-    p.flip=false
-  elseif(btn(0))then
-    p.flip=true
-  end
-  spr(self.s,self.x,self.y,self.w,self.h,p.flip)	
+	if(p.sstate==0 or p.sstate==2)then
+		if(p.sstate==0)then
+			if(p.scounter>2)p.scounter=0
+		end
+		if(p.sstate==2)then
+			if(p.scounter>1)p.scounter=0
+		end
+
+		p.s=tmp+p.scounter
+		p.clk+=1
+		if(p.clk>p.animspd)then
+			p.scounter+=1
+			p.clk=0
+
+		end
+	end
+	if(btn(1))then
+		p.flip=false
+	elseif(btn(0))then
+		p.flip=true
+	end
+	spr(self.s,self.x,self.y,self.w,self.h,p.flip)
 end
 
 function p:move()
-  --if(btn(1))p.x+=p.xspd
-  --if(btn(0))p.x-=p.xspd
-  if(p:grounded() and btn(4))then
-    p.sstate=2
-    return
-  end
+	--if(btn(1))p.x+=p.xspd
+	--if(btn(0))p.x-=p.xspd
+	if(p:grounded() and btn(4))then
+		p.sstate=2
+		return
+	end
 
-  if(p:grounded())then
-    p.up=0
-    if(btn(0)or btn(1))p.sstate=0
-    if(btn(2))p.up=p.jumpup
-    if(not btn(0) and not btn(1))p.sstate=-1
-  else
-    p.sstate=1
-  end
-  
-  p:fall()
-  
-  if(btn(1) and not p:collideleft())then p.x+=p.xspd
-  elseif(btn(0) and not p:collideright())then p.x-=p.xspd
-  end
+	if(p:grounded())then
+		p.up=0
+		if(btn(0)or btn(1))p.sstate=0
+		if(btn(2))p.up=p.jumpup
+		if(not btn(0) and not btn(1))p.sstate=-1
+	else
+		p.sstate=1
+	end
 
-  if(p:collideright  ())p.x=flr(p.x/8)*8
-  if(p:collideleft  ())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
+	p:fall()
+
+	if(btn(1) and not p:collideleft())then
+		p.x+=p.xspd
+	elseif(btn(0) and not p:collideright())then
+		p.x-=p.xspd
+	end
+
+	if(p:collideright	())p.x=flr(p.x/8)*8
+	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
 end
 
 function p:collideleft()
-    --bottomleft
-    blfx=self.x
-    blfy=self.y+self.h*8-1
-   
-    --upleft
-    ulfx=self.x
-    ulfy=self.y
+	--bottomleft
+	blfx=self.x
+	blfy=self.y+self.h*8-1
 
-    while blfy>=ulfy do 
-    print(blfx,50,10,10)
-    print(blfy,70,10,10)
-    --print(lfx<rfx,70,30,10) 
-    --pset(blfx,blfy,10)
-    tile=mget(blfx/8,blfy/8)
-    if( fget(tile,0))then
-      return true
-    end
-    blfy-=1
-  end
+	--upleft
+	ulfx=self.x
+	ulfy=self.y
 
-  return false
+	while blfy>=ulfy do
+		print(blfx,50,10,10)
+		print(blfy,70,10,10)
+		--print(lfx<rfx,70,30,10)
+		--pset(blfx,blfy,10)
+		tile=mget(blfx/8,blfy/8)
+		if( fget(tile,0))then
+			return true
+		end
+		blfy-=1
+	end
+
+	return false
 end
 
 function p:collideright()
-    --bottomleft
-    brfx=self.x+self.w*8-1
-    brfy=self.y+self.h*8-1
-   
-    --upleft
-    urfx=self.x+self.w*8-1
-    urfy=self.y
+	--bottomleft
+	brfx=self.x+self.w*8-1
+	brfy=self.y+self.h*8-1
 
-    while brfy>=urfy do 
-    print(brfx,50,10,10)
-    print(brfy,70,10,10)
-    --print(lfx<rfx,70,30,10) 
-    --pset(brfx,brfy,10)
-    tile=mget(brfx/8,brfy/8)
-    if( fget(tile,0))then
-      return true
-    end
-    brfy-=1
-  end
+	--upleft
+	urfx=self.x+self.w*8-1
+	urfy=self.y
 
-  return false
+	while brfy>=urfy do
+		print(brfx,50,10,10)
+		print(brfy,70,10,10)
+		--print(lfx<rfx,70,30,10)
+		--pset(brfx,brfy,10)
+		tile=mget(brfx/8,brfy/8)
+		if( fget(tile,0))then
+			return true
+		end
+		brfy-=1
+	end
+
+	return false
 end
 
 function p:fall()
-  
-   self.up-=self.g
-    if(self.up<self.maxfall)self.up=self.maxfall
-    self.y-=self.up
-  
 
-  if(p:collidetop())then
-    self.y=flr(self.y/8+0x0.ffff)*8
-  end
-  if( p:grounded() ) then
-    self.y=flr(self.y/8)*8
-  end
+	self.up-=self.g
+	if(self.up<self.maxfall)self.up=self.maxfall
+	self.y-=self.up
+
+
+	if(p:collidetop())then
+		self.y=flr(self.y/8+0x0.ffff)*8
+	end
+	if( p:grounded() ) then
+		self.y=flr(self.y/8)*8
+	end
 
 end
 
 function p:collidetop()
-  -- left foot
-  lfx=self.x
-  lfy=self.y
-  
-  --right foot
-  rfx=self.x+self.w*8-1
-  rfy=self.y
-  
+	-- left foot
+	lfx=self.x
+	lfy=self.y
 
-  while lfx<=rfx do 
-    -- print(lfx,50,10,10)
-    -- print(rfx,70,10,10)
-    -- print(lfx<rfx,70,30,10) 
-    pset(lfx,lfy,10)
-    tile=mget(lfx/8,lfy/8)
-    if( fget(tile,0))then
-      return true
-    end
-    lfx+=1
-  end
+	--right foot
+	rfx=self.x+self.w*8-1
+	rfy=self.y
 
-  return false
+
+	while lfx<=rfx do
+		-- print(lfx,50,10,10)
+		-- print(rfx,70,10,10)
+		-- print(lfx<rfx,70,30,10)
+		pset(lfx,lfy,10)
+		tile=mget(lfx/8,lfy/8)
+		if( fget(tile,0))then
+			return true
+		end
+		lfx+=1
+	end
+
+	return false
 end
 
 function p:grounded()
-  -- left foot
-  lfx=self.x
-  lfy=self.y+self.h*8
-  
-  --right foot
-  rfx=self.x+self.w*8-1
-  rfy=self.y+self.h*8
-  
+	-- left foot
+	lfx=self.x
+	lfy=self.y+self.h*8
 
-  while lfx<=rfx do 
-    -- print(lfx,50,10,10)
-    -- print(rfx,70,10,10)
-    -- print(lfx<rfx,70,30,10) 
-    pset(lfx,lfy,10)
-    tile=mget(lfx/8,lfy/8)
-    if( fget(tile,0))then
-      return true
-    end
-    lfx+=1
-  end
+	--right foot
+	rfx=self.x+self.w*8-1
+	rfy=self.y+self.h*8
 
-  return false
+
+	while lfx<=rfx do
+		-- print(lfx,50,10,10)
+		-- print(rfx,70,10,10)
+		-- print(lfx<rfx,70,30,10)
+		pset(lfx,lfy,10)
+		tile=mget(lfx/8,lfy/8)
+		if( fget(tile,0))then
+			return true
+		end
+		lfx+=1
+	end
+
+	return false
 end
+
+function loadlevel(i)
+	celx=levels[i][1][1]
+	cely=levels[i][1][2]
+	celw=levels[i][2][1]
+	celh=levels[i][2][2]
+	map(celx,cely,0,0,celw,celh)
+	camera(0,0-(16-celh)*8)
+end
+
+function spawnitems()
+	
+end 
 __gfx__
 00000000bbbbbb888888888bbbbbbbbbbbbbbbbbbbbbbb888888888bbbbbbbbbbbbbbbbbbbbbbb888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 00000000bbbb888888888888bbbbbbbbbbbbbbbbbbbb888888888888bbbbbbbbbbbbbbbbbbbb888888888888bbbbbbbbbbbb0b0bbbbbbbbbbbbbbbbbbbbbbbbb
@@ -474,13 +493,6 @@ __gff__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001010101010101000000000000000000000000000202020000000000000000010000000000000000000000000101010100000000000000000001010101010101
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000056000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000006a0000000056000000000000690000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000670056000000007600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
