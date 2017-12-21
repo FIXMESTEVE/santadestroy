@@ -17,6 +17,9 @@ p.up=0
 p.g=0.5
 p.maxfall=-2.5
 p.xspd=1
+p.haskey=false
+
+activeswitch=-1 -- -1 none 0 blue  1 red  2 yellow
 
 curlvl=1
 
@@ -29,8 +32,8 @@ key.inity=-99
 
 
 levels={
-	--{x,y},{w,h},haskey
-	{{0,0},{20,9},1}
+	--{x,y},{w,h},haskey,activeswitch
+	{{0,0},{20,9},1,1}
 }
 
 function _init()
@@ -45,16 +48,16 @@ function _draw()
 	drawlevel(1)
 	p:draw()
 	--printh("haskey "..levels[curlvl][3])
-	--if(levels[curlvl][3]==1)then
+	if(levels[curlvl][3]==1)then
 		key:draw()
-	--end
+	end
 end
 
 function drawdebug()
 	cls(5)
 	drawlevel(1)
 	p:draw()
-	--printh("haskey ".. levels[curlvl][3])
+	printh("haskey ".. levels[curlvl][3])
 	if(levels[curlvl][3]==1)then
 		key:draw()
 	end
@@ -63,8 +66,15 @@ end
 function _update()
 	--drawdebug()
 	p:move()
-	if(levels[curlvl][3]==true)then
-		--key:update()
+	if(levels[curlvl][3]==1)then
+		key:update()
+	end
+end
+
+function key:update()
+	if(p.haskey)then
+		key.x=p.x
+		key.y=p.y-p.h*2
 	end
 end
 
@@ -92,7 +102,6 @@ function p:draw()
 		if(p.clk>p.animspd)then
 			p.scounter+=1
 			p.clk=0
-
 		end
 	end
 	if(btn(1))then
@@ -147,7 +156,7 @@ function p:collideleft()
 		--print(lfx<rfx,70,30,10)
 		--pset(blfx,blfy,10)
 		tile=mget(blfx/8,blfy/8)
-		if( fget(tile,0))then
+		if( fget(tile,0) and not fget(tile,1))then
 			return true
 		end
 		blfy-=1
@@ -171,7 +180,7 @@ function p:collideright()
 		--print(lfx<rfx,70,30,10)
 		--pset(brfx,brfy,10)
 		tile=mget(brfx/8,brfy/8)
-		if( fget(tile,0))then
+		if( fget(tile,0) and not fget(tile,1))then
 			return true
 		end
 		brfy-=1
@@ -212,7 +221,7 @@ function p:collidetop()
 		-- print(lfx<rfx,70,30,10)
 		pset(lfx,lfy,10)
 		tile=mget(lfx/8,lfy/8)
-		if( fget(tile,0))then
+		if( fget(tile,0) and not fget(tile,1))then
 			return true
 		end
 		lfx+=1
@@ -236,14 +245,84 @@ function p:grounded()
 		-- print(rfx,70,10,10)
 		-- print(lfx<rfx,70,30,10)
 		pset(lfx,lfy,10)
+		local x=lfx/8
+		local y=lfy/8
 		tile=mget(lfx/8,lfy/8)
 		if( fget(tile,0))then
 			return true
 		end
+
+		if(p.up<=0 and fget(tile,7))then
+			if(tile==76)then
+				activeswitch=0
+				mset(x,y,92)
+			elseif(tile==77)then
+				activeswitch=1
+				mset(x,y,93)
+			elseif(tile==78)then
+				activeswitch=2
+				mset(x,y,94)
+			end
+			switchmap(curlvl)
+			return true
+		end
+
 		lfx+=1
 	end
 
 	return false
+end
+
+function switchmap(i)
+	celx=levels[i][1][1]
+	cely=levels[i][1][2]
+	celw=levels[i][2][1]
+	celh=levels[i][2][2]
+
+	local i=celx
+	local j=cely
+
+	while(j<cely+celh)do
+		while(i<celx+celw)do
+			if(mget(i,j)==70)mset(i,j,86) --hard blue to transp blue (block)
+			if(mget(i,j)==74)mset(i,j,90) --hard blue to transp blue (ladder)
+			if(mget(i,j)==109)mset(i,j,111) --hard blue to transp blue (platform)
+
+			if(mget(i,j)==69)mset(i,j,85) --hard red to transp red (block)
+			if(mget(i,j)==125)mset(i,j,127) --hard red to transp red (ladder)
+			if(mget(i,j)==73)mset(i,j,89) --hard red to transp red (platform)
+
+			if(mget(i,j)==68)mset(i,j,84) --hard yellow to transp yellow (block)
+			if(mget(i,j)==72)mset(i,j,88) --hard yellow to transp yellow (ladder)
+			if(mget(i,j)==122)mset(i,j,95) --hard yellow to transp yellow (platform)
+
+			if(activeswitch==0)then
+				if(mget(i,j)==86)mset(i,j,70) --transp blue to hard blue (block)
+				if(mget(i,j)==90)mset(i,j,74) --transp blue to hard blue (ladder)
+				if(mget(i,j)==111)mset(i,j,109) --transp blue to hard blue (platform)
+
+				if(mget(i,j)==93)mset(i,j,77) --erect red switch
+				if(mget(i,j)==94)mset(i,j,78) --erect yellow switch
+			elseif(activeswitch==1)then
+				if(mget(i,j)==85)mset(i,j,69) --transp red to hard red (block)
+				if(mget(i,j)==89)mset(i,j,73) --transp red to hard red (ladder)
+				if(mget(i,j)==127)mset(i,j,125) --transp red to hard red (platform)
+
+				if(mget(i,j)==92)mset(i,j,76) --erect blue switch
+				if(mget(i,j)==94)mset(i,j,78) --erect yellow switch
+			elseif(activeswitch==2)then
+				if(mget(i,j)==84)mset(i,j,68) --transp yel to hard yel (block)
+				if(mget(i,j)==88)mset(i,j,72) --transp yel to hard yel (ladder)
+				if(mget(i,j)==95)mset(i,j,122) --transp yel to hard yel (platform)
+
+				if(mget(i,j)==93)mset(i,j,77) --erect red switch
+				if(mget(i,j)==92)mset(i,j,76) --erect blue switch
+			end
+			i+=1
+		end
+		j+=1
+		i=celx
+	end
 end
 
 function drawlevel(i)
@@ -303,38 +382,38 @@ function spawnitems(i)
 	printh("spawnitem j:"..j)
 end 
 __gfx__
-00000000bbbbbb888888888bbbbbbbbbbbbbbbbbbbbbbb888888888bbbbbbbbbbbbbbbbbbbbbbb888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-00000000bbbb888888888888bbbbbbbbbbbbbbbbbbbb888888888888bbbbbbbbbbbbbbbbbbbb888888888888bbbbbbbbbbbb0b0bbbbbbbbbbbbbbbbbbbbbbbbb
-00000000bbb88888888888888bbbbbbbbbbbbbbbbbb88888888888888bbbbbbbbbbbbbbbbbb88888888888888bbbbbbbbbb09090bbbbbbbbbbbbbbbbbbbbbbbb
-00707000bb8888888887777788bbbbbbbbbbbbbbbb8888888887777788bbbbbbbbbbbbbbbb8888888887777788bbbbbbbbb09990000bbbbbbbbbbbbbbbbbbbbb
-00070000b888888887777777788bbbbbbbbbbbbbb888888887777777788bbbbbbbbbbbbbb888888887777777788bbbbbbbb00900a80bbbbbbbbbbbbbbbbbbbbb
-00707000b888888877777777778bbbbbbbbbbbbbb888888877777777778bbbbbbbbbbbbbb888888877777777778bbbbbbbb099908a0bbbbbbbbbbbbbbbbbbbbb
-0000000088888887777ffffff77bbbbbbbbbbbbb88888887777ffffff77bbbbbbbbbbbbb88888887777ffffff77bbbbbbbbb4444443bbbbbbbbbbbbbbbbbbbbb
-00000000778bbb7fffff1dff1dfbbbbbbbbbbbbb778bbb7fffff1dff1dfbbbbbbbbbbbbb778bbb7fffff1dff1dfbbbbbbbbb444444433bbbbbbbbbbbb333bbbb
-bbbbbbb7777888877fff11ff11fbbbbbbbbbbbb7777888877fff11ff11fbbbbbbbbbbbb7777888877fff11ff11fbbbbbbbb4444444433a333933333a3303bbbb
-bbbbb887070888777fffff88ff7bbbbbbbbbb887070888777fffff88ff7bbbbbbbbbb887777888777fffff88ff7bbbbbbbb4444444433333333a33333303bbbb
-bbb888809090888777777777777bbbbbbbb888809090888777777777777bbbbbbbb888887788888777777777777bbbbbbbb4444444439339333339333303bbbb
-bb8888809990000887777777777bbbbbbb8888809990000887777777777bbbbbbb8888888888888887777777777bbbbbbbb4444444433bbbbbbbbbbbb333bbbb
-b88888800900a80888887777777bbbbbb88888800900a80888887777777bbbbbb88888888888888888887777777bbbbbbbb44444443bbbbbbbbbbbbbbbbbbbbb
-8888888099908a088888877777888bbb8888888099908a088888877777888bbb88888888888888888888877777888bbbbbb4444444bbbbbbbbbbbbbbbbbbbbbb
-88888888444444388888877777888bbb88888888444444388888877777888bbb88888888888888888888877777888bbbbbbb444444bbbbbbbbbbbbbbbbbbbbbb
-8888888844444443388888777888833388888888444444433888887778888333888888888888888888888877788888bbbbbbb4444bbbbbbbbbbbbbbbbbbbbbbb
-88888884444444433a333933333a330388888884444444433a333933333a3303888888888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-88888884444444433333333a3333330388888884444444433333333a33333303888888888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-8888888444444443933933333933330388888884444444439339333339333303888888888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-8888888444444443377888888877733388888884444444433778888888777333888888888888888777788888887778bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-888888844444443777788888887778bb888888844444443777788888887778bb888888888888888777788888887778bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-00000884444444a888888888800000bb00000884444444a888888888800000bb000008888888aaa888888888800000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-000000004444440aaaa0000000000bbb000000004444440aaaa0000000000bbb000000000000aa0aaaa0000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-0000000004444a0aaaa0000000000bbb0000000004444a0aaaa0000000000bbb000000000000aa0aaaa0000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bb0000000000aa0aaaa0000000888bbbbb0000000000aa0aaaa0000000888bbbbb0000000000aa0aaaa0000000888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbb8888888aaa888888888888bbbbbbbbbb8888888aaa888888888888bbbbbbbbbb8888888aaa888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbb0000000000000000000bbbbbbbbbbbbb0000000000000000000bbbbbbbbbbbbb0000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbb00000000000000bbbbbbbbbbbbbbbbbb00000000000000bbbbbbbbbbbbbbbbbb00000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbb000bbbbbbbbb0000bbbbbbbbbbbbbbbb000bbbbbbbbb0000bbbbbbbbbbbbbbbb000bbbbbbbbbb000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbb0000bbbbbbbbb00000bbbbbbbbbbbbbb0000bbbbbbbbb00000bbbbbbbbbbbbbb0000bbbbbbbbbb0000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbb000000bbbbbbb00000000bbbbbbbbbbb000000bbbbbbb00000000bbbbbbbbbbb000000bbbbbbbb0000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbb0000000bbbbbb000000000bbbbbbbbbb0000000bbbbbb000000000bbbbbbbbbb0000000bbbbbbb00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00707000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00070000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00707000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 53333335b3333333333333333333333b5aaaaaa5588888855cccccc533333333aaaaaaaa88888888cccccccc66666666bb0000bbbb0000bbbb0000bbbbbbbbbb
 35333353333333333333333333333333a5aaaa5a85888858c5cccc5c33333333aaaaaaaa88888888cccccccc56565656b0cccc0bb088880bb0aaaa0bbbbbbbbb
 33555533336336336336336336336333aa5555aa88555588cc5555cc33555533aa5555aa88555588cc5555cc65656565b0cccc0bb088880bb0aaaa0bbbbbbbbb
@@ -562,7 +641,7 @@ b887778bb888777bb888777b7788777bb7ffff7b7fffef07777777777077a000000a771cbbbbbbbb
 88888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 
 __gff__
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001010101010101000000000100000000000000000202020000000000000000010000000000000000000000000101010000000000000000000001010101010101
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001030303010101000000000180808000000000000202020000000000000000000000000000000000000000000303030000000000000000000003030303030300
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 0000000000000000000056000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
