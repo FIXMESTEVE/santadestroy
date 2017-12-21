@@ -19,8 +19,18 @@ p.maxfall=-2.5
 p.xspd=1
 
 curlvl=1
+
+key={}
+key.spr=118
+key.x=-99
+key.y=-99
+key.initx=-99
+key.inity=-99
+
+
 levels={
-	{{0,0},{20,9}}
+	--{x,y},{w,h},haskey
+	{{0,0},{20,9},1}
 }
 
 function _init()
@@ -34,17 +44,32 @@ function _draw()
 	updatecam()
 	drawlevel(1)
 	p:draw()
+	--printh("haskey "..levels[curlvl][3])
+	--if(levels[curlvl][3]==1)then
+		key:draw()
+	--end
 end
 
 function drawdebug()
 	cls(5)
 	drawlevel(1)
 	p:draw()
+	--printh("haskey ".. levels[curlvl][3])
+	if(levels[curlvl][3]==1)then
+		key:draw()
+	end
 end
 
 function _update()
 	--drawdebug()
 	p:move()
+	if(levels[curlvl][3]==true)then
+		--key:update()
+	end
+end
+
+function key:draw()
+	spr(key.spr,key.x,key.y)
 end
 
 function p:draw()
@@ -252,13 +277,20 @@ function spawnitems(i)
 	printh("spawnitem j:"..j)
 	printh("spawnitem celx+celw:"..celx+celw)
 	printh("spawnitem cely+celh:"..cely+celh)
-	while(j<celx+celw)do
-		while(i<cely+celh)do
+	while(j<cely+celh)do
+		while(i<celx+celw)do
 			printh(mget(i,j))
 			if(mget(i,j)==96)then
-
 				p.x=i*8
 				p.y=j*8
+				mset(i,j,0)
+			end
+			if(mget(i,j)==118)then
+				printh("hello")
+				key.initx=i*8
+				key.inity=j*8
+				key.x=key.initx
+				key.y=key.inity
 				mset(i,j,0)
 			end
 			i+=1
