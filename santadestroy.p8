@@ -17,7 +17,7 @@ p.up=0
 p.g=0.5
 p.maxfall=-2.5
 p.xspd=1
-p.hasitem=118
+p.hasitem=0
 
 activeswitch=-1 -- -1 none 0 blue  1 red  2 yellow
 
@@ -31,6 +31,8 @@ snowclk=0
 
 camx=0
 camy=0
+
+liftable=0
 
 levels={
 	--{x,y},{w,h},hasitem,activeswitch
@@ -72,7 +74,7 @@ end
 function objects:update()
 	for o in all(objects) do
 		if(o.spr==118)then
-			if(p.hasitem==118)then
+			if(p.hasitem==o)then
 				o.x=p.x
 				o.y=p.y-8
 			end
@@ -127,7 +129,14 @@ function p:move()
 	--if(btn(1))p.x+=p.xspd
 	--if(btn(0))p.x-=p.xspd
 	if(p:grounded() and btn(4))then
-		p.sstate=2
+		if(p.hasitem!=0)then
+			--throw item
+		else
+			--lift item
+			p.hasitem=p:lift()
+			if(p.hasitem==0)p.sstate=2
+		end
+
 		return
 	end
 
@@ -150,6 +159,10 @@ function p:move()
 
 	if(p:collideright	())p.x=flr(p.x/8)*8
 	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
+end
+
+function p:lift()
+	return liftable
 end
 
 function p:collideleft()
@@ -213,7 +226,6 @@ function p:fall()
 	if( p:grounded() ) then
 		self.y=flr(self.y/8)*8
 	end
-
 end
 
 function p:collidetop()
@@ -262,7 +274,7 @@ function p:grounded()
 			return true
 		end
 
-		if(p.up<=0 and fget(tile,7))then
+		if(p.up<=0 and fget(tile,7))then --land on switch
 			if(tile==76)then
 				activeswitch=0
 				mset(x,y,92)
@@ -275,6 +287,20 @@ function p:grounded()
 			end
 			switchmap(curlvl)
 			return true
+		end
+
+		--grounded on movable object
+		if(p.up<=0)then
+			for o in all(objects)do
+				if(lfx>=o.x and lfx<=o.x+o.w*8)then
+					if(lfy>=o.y and lfy<=o.y+o.h*8)then
+						liftable=o
+						return true
+					else
+						liftable=0
+					end
+				end				
+			end
 		end
 
 		lfx+=1
@@ -382,6 +408,8 @@ function spawnitems(i)
 				key.inity=j*8
 				key.x=key.initx
 				key.y=key.inity
+				key.w=1
+				key.h=1
 				add(objects,key)
 				mset(i,j,0)
 			end
@@ -463,7 +491,7 @@ b777777bbb777777bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b887778bb888777bb888777bb888777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 88887888888788888887888888878888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 0000a0000000a0000000a0000000a000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-88888808888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+88888888888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 00000000000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 0000000bb000000bb000000bb000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 0bbbb0bb000bb0bbbb00bb0bb0bbb0b0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -706,5 +734,5 @@ __map__
 0000005a00000000000045454545560000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000005a00000000000045000000560000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000005a00600000000045000000560000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000005a000000004c0045005d00564040404040400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000005a000000764c0045005d00564040404040400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b4b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
