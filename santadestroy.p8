@@ -49,12 +49,12 @@ end
 
 function _draw()
 	cls(1)
-	--drawsnow()
+	drawsnow()
 	updatecam()
 	drawlevel(1)
 	p:draw()
 	objects:draw()
-	print(stat(0),0+camx,0+camy,7)
+	print(stat(1),0+camx,0+camy,7)
 end
 
 function drawdebug()
@@ -71,15 +71,15 @@ function _update()
 	--drawdebug()
 	p:move()
 	objects:update()
-	--updatesnow()
+	updatesnow()
 end
 
 function objects:update()
-	for o in all(objects) do
-		if(o.spr==118)then
-			if(p.hasitem==o)then
-				o.x=p.x
-				o.y=p.y-8
+	for o=1,#objects do
+		if(objects[o].spr==118)then
+			if(p.hasitem==objects[o])then
+				objects[o].x=p.x
+				objects[o].y=p.y-8
 			end
 		end
 	end
@@ -91,8 +91,8 @@ function objects:update()
 end
 
 function objects:draw()
-	for o in all(objects)do
-		spr(o.spr,o.x,o.y)
+	for o=1,#objects do
+		spr(objects[o].spr,objects[o].x,objects[o].y)
 	end
 end
 
@@ -163,6 +163,45 @@ function p:move()
 	if(p:collideright	())p.x=flr(p.x/8)*8
 	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
 end
+
+-- function p:move()
+-- 	--if(btn(1))p.x+=p.xspd
+-- 	--if(btn(0))p.x-=p.xspd
+-- 	if(p:grounded())then
+-- 		if(btn(4))then
+-- 			if(p.hasitem!=0)then
+-- 				--throw item
+-- 			else
+-- 				--lift item
+-- 				p.hasitem=p:lift()
+-- 				if(p.hasitem==0)p.sstate=2
+-- 			end
+
+-- 			return
+-- 		else
+-- 			p.up=0
+-- 			if(btn(0)or btn(1))p.sstate=0
+-- 			if(btn(2))p.up=p.jumpup
+-- 			if(not btn(0) and not btn(1))p.sstate=-1 
+-- 		end
+-- 	else
+-- 		p.sstate=1
+-- 	end
+
+-- 	p:fall()
+
+-- 	if(p:collideleft	())then
+-- 		p.x=flr(p.x/8)*8 --wizardry for ceil with flr
+-- 	elseif(btn(0))then
+-- 		p.x-=p.xspd
+-- 	end
+	
+-- 	if(p:collideright	())then
+-- 		p.x=flr(p.x/8+0x0.ffff)*8
+-- 	elseif(btn(1))then
+-- 		p.x+=p.xspd
+-- 	end
+-- end
 
 function p:lift()
 	return liftable
@@ -294,18 +333,18 @@ function p:grounded()
 
 		--grounded on object
 		if(p.up<=0)then
-			for o in all(objects)do
-				if(lfx>=o.x and lfx<=o.x+o.w*8)then
-					if(lfy>=o.y and lfy<=o.y+o.h*8)then
+			for o=1,#objects do
+				if(lfx>=objects[o].x and lfx<=objects[o].x+objects[o].w*8)then
+					if(lfy>=objects[o].y and lfy<=objects[o].y+objects[o].h*8)then
 						--is liftable
-						if(o.canlift)then
-							liftable=o
+						if(objects[o].canlift)then
+							liftable=objects[o]
 							return true
 						else
 							liftable=0
 						end
 						--spring
-						if(o.spr==80)then
+						if(objects[o].spr==80)then
 							p.up=p.jumpspg
 						end
 					end
@@ -454,14 +493,18 @@ function refillsnow()
 end
 
 function updatesnow()
-	for s in all(snow) do
+	snowdel={}
+	for s=1,#snow do
 		changedir=rnd(1)
-		if(changedir>=0.95)s.xdir=s.xdir*-1
-		s.xoffset=rnd(1)*s.xdir
-		s.fallspd=rnd(1.9)+0.1
-		s.y+=s.fallspd
-		s.x+=s.xoffset
-		if(s.y>128)del(snow,s)
+		if(changedir>=0.95)snow[s].xdir=snow[s].xdir*-1
+		snow[s].xoffset=rnd(1)*snow[s].xdir
+		snow[s].fallspd=rnd(1.9)+0.1
+		snow[s].y+=snow[s].fallspd
+		snow[s].x+=snow[s].xoffset
+		if(snow[s].y>128)add(snowdel,snow[s])
+	end
+	for s=1,#snowdel do
+		del(snow,snowdel[s])
 	end
 	if(snowclk>snowrfl)then
 	 	refillsnow()
@@ -471,8 +514,8 @@ function updatesnow()
 end
 
 function drawsnow()
-	for s in all(snow)do
-		pset(s.x+camx,s.y+camy,s.c)
+	for s=1,#snow do
+		pset(snow[s].x+camx,snow[s].y+camy,snow[s].c)
 	end
 end
 
