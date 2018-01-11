@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 15
 __lua__
 p={}
-p.sstate=-1 -- -1:idle 0:run 1:jump 2:trylift 3:lift
+p.sstate=-1 -- -1:idle 0:run 1:jump 2:trylift
 p.jumpup=3.8
 p.scounter=0
 p.clk=0
@@ -76,18 +76,15 @@ end
 
 function objects:update()
 	for o=1,#objects do
-		if(objects[o].spr==118)then
+		if(objects[o].spr==118)then --if is key
 			if(p.hasitem==objects[o])then
 				objects[o].x=p.x
 				objects[o].y=p.y-8
+			else
+				objects[o].move()
 			end
 		end
 	end
-
-	-- if(p.hasitem!=0)then
-	-- 	key.x=p.x
-	-- 	key.y=p.y-p.h*2
-	-- end
 end
 
 function objects:draw()
@@ -129,79 +126,42 @@ function p:draw()
 end
 
 function p:move()
-	--if(btn(1))p.x+=p.xspd
-	--if(btn(0))p.x-=p.xspd
-	if(p:grounded() and btn(4))then
-		if(p.hasitem!=0)then
-			--throw item
-		else
-			--lift item
-			p.hasitem=p:lift()
-			if(p.hasitem==0)p.sstate=2
-		end
-
-		return
-	end
-
 	if(p:grounded())then
-		p.up=0
-		if(btn(0)or btn(1))p.sstate=0
-		if(btn(2))p.up=p.jumpup
-		if(not btn(0) and not btn(1))p.sstate=-1
+		if(btn(4))then
+			if(p.hasitem!=0)then
+				--throw item
+				p.hasitem.xspd=1.6
+				p.hasitem.yspd=1.6
+				p.canlift=false
+				p.hasitem=0
+			else
+				--lift item
+				p.hasitem=p:lift()
+				if(p.hasitem==0)p.sstate=2
+			end
+
+			return
+		else
+			p.up=0
+			if(btn(0)or btn(1))p.sstate=0
+			if(btn(2))p.up=p.jumpup
+			if(not btn(0) and not btn(1))p.sstate=-1 
+		end
 	else
 		p.sstate=1
 	end
 
 	p:fall()
 
-	if(btn(1) and not p:collideleft())then
+	if(btn(1))then
 		p.x+=p.xspd
-	elseif(btn(0) and not p:collideright())then
+	elseif(btn(0))then
 		p.x-=p.xspd
 	end
 
 	if(p:collideright	())p.x=flr(p.x/8)*8
 	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
 end
-
--- function p:move()
--- 	--if(btn(1))p.x+=p.xspd
--- 	--if(btn(0))p.x-=p.xspd
--- 	if(p:grounded())then
--- 		if(btn(4))then
--- 			if(p.hasitem!=0)then
--- 				--throw item
--- 			else
--- 				--lift item
--- 				p.hasitem=p:lift()
--- 				if(p.hasitem==0)p.sstate=2
--- 			end
-
--- 			return
--- 		else
--- 			p.up=0
--- 			if(btn(0)or btn(1))p.sstate=0
--- 			if(btn(2))p.up=p.jumpup
--- 			if(not btn(0) and not btn(1))p.sstate=-1 
--- 		end
--- 	else
--- 		p.sstate=1
--- 	end
-
--- 	p:fall()
-
--- 	if(p:collideleft	())then
--- 		p.x=flr(p.x/8)*8 --wizardry for ceil with flr
--- 	elseif(btn(0))then
--- 		p.x-=p.xspd
--- 	end
-	
--- 	if(p:collideright	())then
--- 		p.x=flr(p.x/8+0x0.ffff)*8
--- 	elseif(btn(1))then
--- 		p.x+=p.xspd
--- 	end
--- end
 
 function p:lift()
 	return liftable
@@ -340,8 +300,6 @@ function p:grounded()
 						if(objects[o].canlift)then
 							liftable=objects[o]
 							return true
-						else
-							liftable=0
 						end
 						--spring
 						if(objects[o].spr==80)then
@@ -354,6 +312,7 @@ function p:grounded()
 
 		lfx+=1
 	end
+	liftable=0
 
 	return false
 end
@@ -459,8 +418,17 @@ function spawnitems(i)
 				key.w=1
 				key.h=1
 				key.canlift=true
+				key.xspd=0
+				key.yspd=0
 				add(objects,key)
 				mset(i,j,0)
+
+				function key:move()
+					local d=1
+					if(p.flip)d=-1
+					key.x+=key.xspd*d
+					key.y+=key.yspd
+				end
 			end
 			--spawn spring
 			if(mget(i,j)==80)then
