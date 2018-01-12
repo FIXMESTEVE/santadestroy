@@ -132,6 +132,7 @@ function p:move()
 				--throw item
 				p.hasitem.xspd=1.6
 				p.hasitem.yspd=1.6
+				p.hasitem.thrown=true
 				p.canlift=false
 				p.hasitem=0
 			else
@@ -420,14 +421,57 @@ function spawnitems(i)
 				key.canlift=true
 				key.xspd=0
 				key.yspd=0
+				key.thrown=false
 				add(objects,key)
 				mset(i,j,0)
 
 				function key:move()
-					local d=1
-					if(p.flip)d=-1
-					key.x+=key.xspd*d
-					key.y+=key.yspd
+					if(key.thrown  and not key:grounded())then
+						if(p.flip and not key:collideleft())key.x-=key.xspd
+						if(not p.flip and not key:collideleft())key.x+=key.xspd
+						key.y+=key.yspd
+					end
+
+					if(key:grounded())then
+						key.thrown=false
+						key.y=flr(key.y/8)*8
+					end
+
+					--todo: key collision
+				end
+
+				function key:grounded()
+					-- left foot
+					lfx=self.x
+					lfy=self.y+self.h*8
+
+					--right foot
+					rfx=self.x+self.w*8-1
+					rfy=self.y+self.h*8
+
+
+					while lfx<=rfx do
+						-- print(lfx,50,10,10)
+						-- print(rfx,70,10,10)
+						-- print(lfx<rfx,70,30,10)
+						pset(lfx,lfy,10)
+						local x=lfx/8
+						local y=lfy/8
+						tile=mget(lfx/8,lfy/8)
+						if( fget(tile,0))then
+							return true
+						end
+						lfx+=1
+					end
+					return false
+				end
+
+				function key:collideleft()
+					return false
+				end
+
+				function key:collideright()
+					return false
 				end
 			end
 			--spawn spring
