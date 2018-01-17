@@ -360,13 +360,8 @@ function spawnitems(i)
 	local i=celx
 	local j=cely
 
-	printh("spawnitem i:"..i)
-	printh("spawnitem j:"..j)
-	printh("spawnitem celx+celw:"..celx+celw)
-	printh("spawnitem cely+celh:"..cely+celh)
 	while(j<cely+celh)do
 		while(i<celx+celw)do
-			printh(mget(i,j))
 			--spawn player
 			if(mget(i,j)==96)then
 				p.x=i*8
@@ -375,7 +370,6 @@ function spawnitems(i)
 			end
 			--spawn key
 			if(mget(i,j)==118)then
-				printh("hello")
 				key={}
 				key.spr=118
 				key.initx=i*8
@@ -398,14 +392,16 @@ function spawnitems(i)
 						key.y+=key.yspd
 					end
 
+					
+					--todo: key collision
+    	if(key:collideright	())key.x=flr(key.x/8)*8
+    	if(key:collideleft	())key.x=flr(key.x/8+0x0.ffff)*8 --wizardry for ceil with flr
+					
 					if(key:grounded())then
 						key.thrown=false
 						key.y=flr(key.y/8)*8
 					end
 
-					--todo: key collision
-    	if(p:collideright	())p.x=flr(p.x/8)*8
-    	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
 				end
 
 				function key:grounded()
@@ -435,7 +431,27 @@ function spawnitems(i)
 				end
 
 				function key:collideleft()
-					return true
+						--bottomleft
+    	blfx=self.x
+    	blfy=self.y+self.h*8-1
+    
+    	--upleft
+    	ulfx=self.x
+    	ulfy=self.y
+    
+    	while blfy>=ulfy do
+    		print(blfx,50,10,10)
+    		print(blfy,70,10,10)
+    		--print(lfx<rfx,70,30,10)
+    		--pset(blfx,blfy,10)
+    		tile=mget(blfx/8,blfy/8)
+    		if( fget(tile,0) and not fget(tile,1))then
+    			return true
+    		end
+    		blfy-=1
+    	end
+    
+    	return false
 				end
 
 				function key:collideright()
