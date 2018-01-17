@@ -1,8 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
-version 15
+version 16
 __lua__
 p={}
-p.sstate=-1 -- -1:idle 0:run 1:jump 2:trylift
+---1:idle 0:run 1:jump 2:trylift
+p.sstate=-1
 p.jumpup=3.8
 p.scounter=0
 p.clk=0
@@ -20,7 +21,8 @@ p.xspd=1
 p.hasitem=0
 p.jumpspg=6
 
-activeswitch=-1 -- -1 none 0 blue  1 red  2 yellow
+-- -1 none 0 blue 1 red 2 yellow
+activeswitch=-1
 
 curlvl=1
 
@@ -40,6 +42,8 @@ levels={
 	{{0,0},{20,9},1,1}
 }
 
+
+-->8
 function _init()
 	palt(0,false)
 	palt(11,true)
@@ -73,7 +77,7 @@ function _update()
 	objects:update()
 	updatesnow()
 end
-
+-->8
 function objects:update()
 	for o=1,#objects do
 		if(objects[o].spr==118)then --if is key
@@ -86,45 +90,7 @@ function objects:update()
 		end
 	end
 end
-
-function objects:draw()
-	for o=1,#objects do
-		spr(objects[o].spr,objects[o].x,objects[o].y)
-	end
-end
-
-function p:draw()
-	if(p.sstate==1)p.s=97
-	if(p.sstate==-1)p.s=96
-
-	if(p.sstate==0)tmp=97
-	if(p.sstate==2)tmp=100
-
-	if(p.sstate==0 or p.sstate==2)then
-		if(p.sstate==0)then
-			if(p.scounter>2)p.scounter=0
-		end
-		if(p.sstate==2)then
-			if(p.scounter>1)p.scounter=0
-		end
-
-		p.s=tmp+p.scounter
-		p.clk+=1
-		if(p.clk>p.animspd)then
-			p.scounter+=1
-			p.clk=0
-		end
-	end
-	if(btn(1))then
-		p.flip=false
-	elseif(btn(0))then
-		p.flip=true
-	end
-
-	if(p.hasitem!=0)p.s=p.s-64
-	spr(self.s,self.x,self.y,self.w,self.h,self.flip)
-end
-
+-->8
 function p:move()
 	if(p:grounded())then
 		if(btn(4))then
@@ -317,7 +283,7 @@ function p:grounded()
 
 	return false
 end
-
+-->8
 function switchmap(i)
 	celx=levels[i][1][1]
 	cely=levels[i][1][2]
@@ -438,6 +404,8 @@ function spawnitems(i)
 					end
 
 					--todo: key collision
+    	if(p:collideright	())p.x=flr(p.x/8)*8
+    	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
 				end
 
 				function key:grounded()
@@ -458,7 +426,7 @@ function spawnitems(i)
 						local x=lfx/8
 						local y=lfy/8
 						tile=mget(lfx/8,lfy/8)
-						if( fget(tile,0))then
+						if(fget(tile,0))then
 							return true
 						end
 						lfx+=1
@@ -467,7 +435,7 @@ function spawnitems(i)
 				end
 
 				function key:collideleft()
-					return false
+					return true
 				end
 
 				function key:collideright()
@@ -541,6 +509,45 @@ function makesnow(xinit,col)
 	s.c=col
 	add(snow,s)
 end
+-->8
+function objects:draw()
+	for o=1,#objects do
+		spr(objects[o].spr,objects[o].x,objects[o].y)
+	end
+end
+-->8
+function p:draw()
+	if(p.sstate==1)p.s=97
+	if(p.sstate==-1)p.s=96
+
+	if(p.sstate==0)tmp=97
+	if(p.sstate==2)tmp=100
+
+	if(p.sstate==0 or p.sstate==2)then
+		if(p.sstate==0)then
+			if(p.scounter>2)p.scounter=0
+		end
+		if(p.sstate==2)then
+			if(p.scounter>1)p.scounter=0
+		end
+
+		p.s=tmp+p.scounter
+		p.clk+=1
+		if(p.clk>p.animspd)then
+			p.scounter+=1
+			p.clk=0
+		end
+	end
+	if(btn(1))then
+		p.flip=false
+	elseif(btn(0))then
+		p.flip=true
+	end
+
+	if(p.hasitem!=0)p.s=p.s-64
+	spr(self.s,self.x,self.y,self.w,self.h,self.flip)
+end
+
 __gfx__
 00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
