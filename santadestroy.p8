@@ -445,7 +445,6 @@ function spawnitems(i)
 				    	while blfy>=ulfy do
 				    		print(blfx,50,10,10)
 				    		print(blfy,70,10,10)
-				    		--print(lfx<rfx,70,30,10)
 				    		--pset(blfx,blfy,10)
 				    		tile=mget(blfx/8,blfy/8)
 				    		if( fget(tile,0) and not fget(tile,1))then
@@ -458,6 +457,25 @@ function spawnitems(i)
 				end
 
 				function key:collideright()
+					--bottomleft
+					brfx=self.x+self.w*8-1
+					brfy=self.y+self.h*8-1
+
+					--upleft
+					urfx=self.x+self.w*8-1
+					urfy=self.y
+
+					while brfy>=urfy do
+						print(brfx,50,10,10)
+						print(brfy,70,10,10)
+						--pset(brfx,brfy,10)
+						tile=mget(brfx/8,brfy/8)
+						if( fget(tile,0) and not fget(tile,1))then
+							return true
+						end
+						brfy-=1
+					end
+
 					return false
 				end
 			end
