@@ -97,6 +97,8 @@ function p:move()
 			if(p.hasitem!=0)then
 				--throw item
 				p.hasitem.xspd=1.6
+				p.hasitem.flip=false
+				if(p.flip)p.hasitem.flip=true
 				p.hasitem.yspd=1.6
 				p.hasitem.thrown=true
 				p.canlift=false
@@ -378,6 +380,7 @@ function spawnitems(i)
 				key.y=key.inity
 				key.w=1
 				key.h=1
+				key.flip=false
 				key.canlift=true
 				key.xspd=0
 				key.yspd=0
@@ -386,22 +389,22 @@ function spawnitems(i)
 				mset(i,j,0)
 
 				function key:move()
-					if(key.thrown  and not key:grounded())then
-						if(p.flip and not key:collideleft())key.x-=key.xspd
-						if(not p.flip and not key:collideleft())key.x+=key.xspd
+					
+					if(not key:grounded())then
+						if(key.thrown)then
+							if(key.flip and not key:collideleft())key.x-=key.xspd
+							if(not key.flip and not key:collideleft())key.x+=key.xspd
+							--todo: key collision
+							if(key:collideright	())key.x=flr(key.x/8)*8
+							if(key:collideleft	())key.x=flr(key.x/8+0x0.ffff)*8 --wizardry for ceil with flr
+						end
 						key.y+=key.yspd
 					end
 
-					
-					--todo: key collision
-    	if(key:collideright	())key.x=flr(key.x/8)*8
-    	if(key:collideleft	())key.x=flr(key.x/8+0x0.ffff)*8 --wizardry for ceil with flr
-					
 					if(key:grounded())then
 						key.thrown=false
 						key.y=flr(key.y/8)*8
 					end
-
 				end
 
 				function key:grounded()
@@ -432,32 +435,33 @@ function spawnitems(i)
 
 				function key:collideleft()
 						--bottomleft
-    	blfx=self.x
-    	blfy=self.y+self.h*8-1
-    
-    	--upleft
-    	ulfx=self.x
-    	ulfy=self.y
-    
-    	while blfy>=ulfy do
-    		print(blfx,50,10,10)
-    		print(blfy,70,10,10)
-    		--print(lfx<rfx,70,30,10)
-    		--pset(blfx,blfy,10)
-    		tile=mget(blfx/8,blfy/8)
-    		if( fget(tile,0) and not fget(tile,1))then
-    			return true
-    		end
-    		blfy-=1
-    	end
-    
-    	return false
+				    	blfx=self.x
+				    	blfy=self.y+self.h*8-1
+				    
+				    	--upleft
+				    	ulfx=self.x
+				    	ulfy=self.y
+				    
+				    	while blfy>=ulfy do
+				    		print(blfx,50,10,10)
+				    		print(blfy,70,10,10)
+				    		--print(lfx<rfx,70,30,10)
+				    		--pset(blfx,blfy,10)
+				    		tile=mget(blfx/8,blfy/8)
+				    		if( fget(tile,0) and not fget(tile,1))then
+				    			return true
+				    		end
+				    		blfy-=1
+				    	end
+				    
+				    	return false
 				end
 
 				function key:collideright()
 					return false
 				end
 			end
+
 			--spawn spring
 			if(mget(i,j)==80)then
 				spg={}
