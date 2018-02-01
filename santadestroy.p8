@@ -35,10 +35,12 @@ snowclk=0
 camx=0
 camy=0
 
+cs=1
+
 liftable=0
 
 levels={
-	--{x,y},{w,h},hasitem,activeswitch
+	--{x,y},{w,h},haskey,activeswitch
 	{{0,0},{20,9},1,1}
 }
 
@@ -58,6 +60,11 @@ function _draw()
 	drawlevel(1)
 	p:draw()
 	objects:draw()
+	
+	if(cs==1)then
+ 	updatecs(cs)
+ end
+	
 	print(stat(1),0+camx,0+camy,7)
 end
 
@@ -68,14 +75,17 @@ function drawdebug()
 	drawlevel(1)
 	p:draw()
 	objects:draw()
-	print(stat(0),0,0,7)
+	print(stat(1),0+camx,0+camy,7)
 end
 
 function _update()
 	--drawdebug()
-	p:move()
-	objects:update()
-	updatesnow()
+ --if(cs==0)then
+ 	p:move()
+ 	objects:update()
+ 	updatesnow()
+ 
+ --end
 end
 -->8
 function objects:update()
@@ -626,6 +636,33 @@ function p:draw()
 	spr(self.s,self.x,self.y,self.w,self.h,self.flip)
 end
 
+-->8
+csclk=0
+ticktock=1
+function updatecs(c)
+	--maxcsclk=3
+	duration=20
+	if(c==1)then
+		print(c,50,50)
+		csclk+=ticktock
+		sx=7*8
+		sy=6*8
+		sw=2*8
+		sh=2*8
+		dx=20-csclk/2
+		dy=20-csclk/2
+		dw=csclk
+		dh=csclk
+		sspr(sx,sy,sw,sh,dx,dy,dw,dh)
+		if(csclk>duration)then
+			ticktock=-1
+		end
+		print(csclk,30,30)
+		if(csclk<0)cs=0
+		
+	end
+	if(csclk<0)c=0
+end
 __gfx__
 00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
