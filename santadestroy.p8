@@ -67,7 +67,7 @@ function _draw()
 
 	updatecs(cs)
 
- print(stat(1),0+camx,0+camy,7)
+	print("cpu "..stat(1),0+camx,0+camy,7)
 end
 
 function drawdebug()
@@ -77,7 +77,7 @@ function drawdebug()
 	drawlevel(1)
 	p:draw()
 	objects:draw()
-	print(stat(1),0+camx,0+camy,7)
+	print("cpu "..stat(1),0+camx,0+camy,7)
 end
 
 function _update()
@@ -366,6 +366,101 @@ function updatecam()
 	camera(camx,camy)
 end
 
+function makeobj(spr,x,y,w,h,flip,canlift,xspd,yspd,thrown,maxf, maxclk, ticktock)
+	o={}
+	o.spr=spr
+	o.initx=x
+	o.inity=y
+	o.x=x
+	o.y=y
+	o.w=w
+	o.h=h
+	o.flip=flip or false
+	o.canlift=canlift or false
+	o.xspd=xspd or 0
+	o.yspd=yspd or 0
+	o.thrown=thrown or false
+	o.initspr=spr
+	o.maxf=maxf or 1
+	o.maxclk=maxclk or -1
+	o.ticktock=ticktock or -1 -- is ticktock anim?
+	o.clk=0
+	o.f=0
+	add(objects,o)
+	mset(x/8,y/8,0)
+
+	function o:grounded()
+		-- left foot
+		lfx=self.x
+		lfy=self.y+self.h*8
+
+		--right foot
+		rfx=self.x+self.w*8-1
+		rfy=self.y+self.h*8
+
+
+		while lfx<=rfx do
+			pset(lfx,lfy,10)
+			local x=lfx/8
+			local y=lfy/8
+			tile=mget(lfx/8,lfy/8)
+			if(fget(tile,0))then
+				return true
+			end
+			lfx+=1
+		end
+		return false
+	end
+
+	function o:collideleft()
+		--bottomleft
+	    	blfx=self.x
+	    	blfy=self.y+self.h*8-1
+	    
+	    	--upleft
+	    	ulfx=self.x
+	    	ulfy=self.y
+	    
+	    	while blfy>=ulfy do
+	    		print(blfx,50,10,10)
+	    		print(blfy,70,10,10)
+	    		--pset(blfx,blfy,10)
+	    		tile=mget(blfx/8,blfy/8)
+	    		if( fget(tile,0) and not fget(tile,1))then
+	    			return true
+	    		end
+	    		blfy-=1
+	    	end
+	    
+	    	return false
+	end
+
+	function o:collideright()
+		--bottomleft
+		brfx=self.x+self.w*8-1
+		brfy=self.y+self.h*8-1
+
+		--upleft
+		urfx=self.x+self.w*8-1
+		urfy=self.y
+
+		while brfy>=urfy do
+			print(brfx,50,10,10)
+			print(brfy,70,10,10)
+			--pset(brfx,brfy,10)
+			tile=mget(brfx/8,brfy/8)
+			if( fget(tile,0) and not fget(tile,1))then
+				return true
+			end
+			brfy-=1
+		end
+
+		return false
+	end
+
+	return o
+end
+
 function spawnitems(i)
 	celx=levels[i][1][1]
 	cely=levels[i][1][2]
@@ -395,50 +490,19 @@ function spawnitems(i)
 			end
 			--spawn gifts
 			if(mget(i,j)==105)then
-				g={}
-				g.spr=105
-				g.maxf=2
-				g.f=0
-				g.initspr=105
-				g.maxclk=3
-				g.ticktock=1
-				g.clk=0
-				g.x=i*8
-				g.y=j*8
-				g.w=1
-				g.h=1
-				g.flip=false
-				g.canlift=false
-				g.xspd=0
-				g.yspd=0
-				add(objects,g)
-				mset(i,j,0)
+				makeobj(105,i*8,j*8,1,1,false,false,0,0,false,2,3,1)
 			end
 			--spawn key
 			if(mget(i,j)==118)then
-				key={}
-				key.spr=118
-				key.initx=i*8
-				key.inity=j*8
-				key.x=key.initx
-				key.y=key.inity
-				key.w=1
-				key.h=1
-				key.flip=false
-				key.canlift=true
-				key.xspd=0
-				key.yspd=0
-				key.thrown=false
-				add(objects,key)
-				mset(i,j,0)
-
+				key=makeobj(118,i*8,j*8,1,1,false,true,0,0,false)
+				
 				function key:move()
 					
 					if(not key:grounded())then
 						if(key.thrown)then
 							if(key.flip and not key:collideleft())key.x-=key.xspd
 							if(not key.flip and not key:collideleft())key.x+=key.xspd
-							--todo: key collision
+							
 							if(key:collideright	())key.x=flr(key.x/8)*8
 							if(key:collideleft	())key.x=flr(key.x/8+0x0.ffff)*8 --wizardry for ceil with flr
 						end
@@ -450,91 +514,11 @@ function spawnitems(i)
 						key.y=flr(key.y/8)*8
 					end
 				end
-
-				function key:grounded()
-					-- left foot
-					lfx=self.x
-					lfy=self.y+self.h*8
-
-					--right foot
-					rfx=self.x+self.w*8-1
-					rfy=self.y+self.h*8
-
-
-					while lfx<=rfx do
-						-- print(lfx,50,10,10)
-						-- print(rfx,70,10,10)
-						-- print(lfx<rfx,70,30,10)
-						pset(lfx,lfy,10)
-						local x=lfx/8
-						local y=lfy/8
-						tile=mget(lfx/8,lfy/8)
-						if(fget(tile,0))then
-							return true
-						end
-						lfx+=1
-					end
-					return false
-				end
-
-				function key:collideleft()
-						--bottomleft
-				    	blfx=self.x
-				    	blfy=self.y+self.h*8-1
-				    
-				    	--upleft
-				    	ulfx=self.x
-				    	ulfy=self.y
-				    
-				    	while blfy>=ulfy do
-				    		print(blfx,50,10,10)
-				    		print(blfy,70,10,10)
-				    		--pset(blfx,blfy,10)
-				    		tile=mget(blfx/8,blfy/8)
-				    		if( fget(tile,0) and not fget(tile,1))then
-				    			return true
-				    		end
-				    		blfy-=1
-				    	end
-				    
-				    	return false
-				end
-
-				function key:collideright()
-					--bottomleft
-					brfx=self.x+self.w*8-1
-					brfy=self.y+self.h*8-1
-
-					--upleft
-					urfx=self.x+self.w*8-1
-					urfy=self.y
-
-					while brfy>=urfy do
-						print(brfx,50,10,10)
-						print(brfy,70,10,10)
-						--pset(brfx,brfy,10)
-						tile=mget(brfx/8,brfy/8)
-						if( fget(tile,0) and not fget(tile,1))then
-							return true
-						end
-						brfy-=1
-					end
-
-					return false
-				end
 			end
 
 			--spawn spring
 			if(mget(i,j)==80)then
-				spg={}
-				spg.spr=80
-				spg.x=i*8
-				spg.y=j*8
-				spg.w=1
-				spg.h=1
-				spg.canlift=false
-				add(objects,spg)
-				mset(i,j,0)
+				makeobj(80,i*8,j*8,1,1)
 			end
 			i+=1
 		end
@@ -600,7 +584,7 @@ function objects:draw()
 end
 
 function animate(o)
-	print(o.spr,40,40,7)
+	--print(o.spr,40,40,7)
 	o.clk+=1
 	if(o.clk>o.maxclk)then
 		o.clk=0
@@ -619,14 +603,14 @@ end
 -->8
 function p:draw()
 	if(p.sstate==1)p.s=97
-	if(p.sstate==-1)p.s=37
+	if(p.sstate==-1)p.s=96
 
 	if(p.sstate==0)tmp=97
 	if(p.sstate==2)tmp=100
 
 	if(p.sstate==0 or p.sstate==2)then
 		if(p.sstate==0)then
-			if(p.scounter>2)p.scounter=0
+			if(p.scounter>1)p.scounter=0
 		end
 		if(p.sstate==2)then
 			if(p.scounter>1)p.scounter=0
@@ -698,22 +682,22 @@ bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7788887777b8887777b8887777b88877bb8888bbbb44444bff4444ffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-77888877778888777788887777888877b888888bb49444444f9444f4bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-8888888b7b888888bb888888bb8888888888888b49a9fff449a9fff4bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-8777777bb887777778877777788777778777777b449f1f1f449f1f1fbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7ff1f1fbbbff1f1fbbff1f1fbbff1f1f7ff1f1fb444f1f1f444f1f1fbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b7ffef7bbb7ffef7bb7ffef7bb7ffef7b7ffef7b448fffff448fffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b777777bbb777777bb777777bb777777b777777b44ffffff44ffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b887778bb888777bb888777bb888777bb887778b44effffb44effffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-88887888888788888887888888878888888878884eeefeee4eeefeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-0000a0000000a0000000a0000000a0007700a0774feeeeef4beeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-88888888888888888888888888888888778888774bfeeefb4bbeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-0000000000000000000000000000000000000000bbefffbbbbeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-0000000bb000000bb000000bb000000b0000000bbeeeeeebbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-0bbbb0bb000bb0bbbb00bb0bb0bbb0b00bbbb0bbbeeeeeebbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-00bbb00b00bbb00bb00b00bb00bbbb0000bbb00beeeeeeeeeeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-000bb0000bbbb000b000000b000bbb00000bb000eeeeeeeeeeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bb44ff4bbb44ff4bbb44ff4bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b4944444b4944444b4944444bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+49a9fff449a9fff449a9fff4bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+449f1f1f449f1f1f449f1f1fbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+444f1f1f444f1f1f444f1f1fbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+44effffe44effffe44effffebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+44ffffff44ffffff44ffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+448ffffb448ffffb448ffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+4888f8884888f88b4888f88bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+4f88888b4f88888b4f88888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+4bf888bb4bf888bb4bf888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bb8ff8bbbb8fff8bbb8ff8bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b888888bb8888888b888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b888888bb88888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+888888888888888888888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 53333335b3333333333333333333333b5aaaaaa5588888855cccccc533333333aaaaaaaa88888888cccccccc66666666bb0000bbbb0000bbbb0000bbbbbbbbbb
 35333353333333333333333333333333a5aaaa5a85888858c5cccc5c33333333aaaaaaaa88888888cccccccc56565656b0cccc0bb088880bb0aaaa0bbbbbbbbb
 33555533336336336336336336336333aa5555aa88555588cc5555cc33555533aa5555aa88555588cc5555cc65656565b0cccc0bb088880bb0aaaa0bbbbbbbbb
@@ -730,22 +714,22 @@ bbb6666bbb55555b50665050bbbbbbbbbabababab8b8b8b8bcbcbcbcbbb9abbbabbbbbab8bbbbb8b
 b555bbbbb555bbbb50650050bbbbbbbbabababab8b8b8b8bcbcbcbcbbbb9abbbbabbbbbab8bbbbb8cbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b9aa794bb9aa794b50650050bbbbbbbbbabababab8b8b8b8bcbcbcbcbbb9abbbabbbbbab8bbbbb8bbcbbbbbcbbbbbbbbb000000bb000000bb000000bbbbbbbbb
 9aa999449aa99944b065005bbbbbbbbbabababab8b8b8b8bcbcbcbcbbbbaabbbbabbbbbab8bbbbb8cbbbbbcbbbbbbbbb0cccccc0088888800aaaaaa0bbbbbbbb
-bb8888bbbbb8888bbbb8888bbbb8888bbbbbbbbbbbbbbbbbbbbbbbbbbbbddddddddddbbbbb28b28bbb8bb8bbb82b82bbbccccccccccccccccccccccbbcbcbcbc
-b888888bbb888888bb888888bb888888bbb6bbbb6bbbb6bbbbbbbbbbbbddddddddddddbbb6778877b778877b7788776bcccccccccccccccccccccccccbcbcbcb
-8888888b7b888888bb888888bb888888bb8888bbbb6bbbbbbbbbbbbbbddddddddddddddb677788777778877777887776cc6cc6cc6cc6cc6cc6cc6cccbcbcbcbc
-8777777bb88777777887777778877777b888888bbb8888bbbbbbbbbbdddd77777777dddd677788777778877777887776bcc6cc6cc6cc6cc6cc6cc6cbcbcbcbcb
-7ff1f1fbbbff1f1fbbff1f1fbbff1f1f8888888bb888888bbbbbbbbbddd777aaaa777ddd288888888888888888888882bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b7ffef7bbb7ffef7bb7ffef7bb7ffef78777777b8888888bbbbbbbbbdd777a0000a777dd677788777778877777887776bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b777777bbb777777bb777777bb7777777fffeffb8777777bbbbbbbbbdd77a000000a77dd677788777778877777887776bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b887778bb888777bb888777b7788777bb7ffff7b7fffeffbbbbbbbbbdd77a000000a77ddb6778877b778877b7788776bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-88887888778788888887887777878888b777777bb7ffff7bb9aaaaabdd77a000000a77ddbaaaaaaaaaaaaaaaaaaaaaabb8888888888888888888888bb8b8b8b8
-7700a0777700a0777700a0770000a000b887778bb777777b9aa999aadd777a0000a777ddaaaaaaaaaaaaaaaaaaaaaaaa8888888888888888888888888b8b8b8b
-7788887788888877778888888888887788887888b887778b9aabb9aadd7777a00a7777ddaa6aa6aa6aa6aa6aa6aa6aaa886886886886886886886888b8b8b8b8
-0000000000000000000000000000007788888888888878889aaaaaabdd7777a00a7777ddbaa6aa6aa6aa6aa6aa6aa6abb8868868868868868868868b8b8b8b8b
-0000000bb000000bb000000bb000000b0000a00088888888b9aaaabbdd777a0000a777ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-0bbbb0bb000bb0bbbb00bb0bb0bbb0b0b000000b0000a000bb9aabbbdd77a000000a77ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-00bbb00b00bbb00bb00b00bb00bbbb00770bb07777000077bb9aabbbdd77aaaaaaaa77ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-000bb0000bbbb000b000000b000bbb00770bb077770bb077bb9aaabbdd777777777777ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+bb44444bbb44444bbb44444bbbb8888bbbbbbbbbbbbbbbbbbbbbbbbbbbbddddddddddbbbbb28b28bbb8bb8bbb82b82bbbccccccccccccccccccccccbbcbcbcbc
+b4944444b4944444b4944444bb888888bb6bbbbbb6bbbb6bbbbbbbbbbbddddddddddddbbb6778877b778877b7788776bcccccccccccccccccccccccccbcbcbcb
+49a9fff449a9fff449a9fff4bb888888bb44444bbbb6bbbbbbbbbbbbbddddddddddddddb677788777778877777887776cc6cc6cc6cc6cc6cc6cc6cccbcbcbcbc
+449f1f1f449f1f1f449f1f1f78877777b4944444bb44444bbbbbbbbbdddd77777777dddd677788777778877777887776bcc6cc6cc6cc6cc6cc6cc6cbcbcbcbcb
+444f1f1f444f1f1f444f1f1fbbff1f1f49a9fff4b4944444bbbbbbbbddd777aaaa777ddd288888888888888888888882bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+44effffe44effffe44effffebb7ffef744911f1149a9fff4bbbbbbbbdd777a0000a777dd677788777778877777887776bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+44ffffff44ffffff44ffffffbb77777744effffe44911f11bbbbbbbbdd77a000000a77dd677788777778877777887776bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+448ffffb448ffffb448ffffb7788777b44ffffff44effffebbbbbbbbdd77a000000a77ddb6778877b778877b7788776bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+4888f8884888f88b4888f88b7787888844fffffb44ffffffb9aaaaabdd77a000000a77ddbaaaaaaaaaaaaaaaaaaaaaabb8888888888888888888888bb8b8b8b8
+4f88888f4f88888b4f88888b0000a000444888bb44fffffb9aa999aadd777a0000a777ddaaaaaaaaaaaaaaaaaaaaaaaa8888888888888888888888888b8b8b8b
+4bf888fb4bf888bb4bf888bb88888877448888bb444888bb9aabb9aadd7777a00a7777ddaa6aa6aa6aa6aa6aa6aa6aaa886886886886886886886888b8b8b8b8
+bb8fffbbbb8fff8fbb8ff8fb00000077b488888b4488888b9aaaaaabdd7777a00a7777ddbaa6aa6aa6aa6aa6aa6aa6abb8868868868868868868868b8b8b8b8b
+b888888bb8888888b888888bb000000b8888888884888888b9aaaabbdd777a0000a777ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b888888bb88888888888888bb0bbb0b08888888888888888bb9aabbbdd77a000000a77ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+88888888888888888888888800bbbb00ff8888ffff8888ffbb9aabbbdd77aaaaaaaa77ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+888888888888888888888888000bbb00ff8888ffff8888ffbb9aaabbdd777777777777ddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -947,7 +931,7 @@ __map__
 0000000000000000000056000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000690000670056000000000000690000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000056000000007600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-6f6f6f5a6f6f6f40404040000000404000000042420000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+6f6f6f5a6f6f6f40404040000000404042424242420000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000005a00000000000045454545560000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000005a00000000000045000000560000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000005a00600000000045000000560000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
