@@ -2,24 +2,6 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 p={}
----1:idle 0:run 1:jump 2:trylift
-p.sstate=-1
-p.jumpup=3.8
-p.scounter=0
-p.clk=0
-p.animspd=4
-p.s=96
-p.flip=false
-p.x=10
-p.y=10
-p.w=1
-p.h=2
-p.up=0
-p.g=0.5
-p.maxfall=-2.5
-p.xspd=1
-p.hasitem=0
-p.jumpspg=6
 
 -- -1 none 0 blue 1 red 2 yellow
 activeswitch=-1
@@ -47,10 +29,27 @@ levels={
 	--{x,y},{w,h},haskey,activeswitch
 	{{0,0},{20,9},1,1}
 }
-
-
 -->8
 function _init()
+ ---1:idle 0:run 1:jump 2:trylift
+ p.sstate=-1
+ p.jumpup=3.8
+ p.scounter=0
+ p.clk=0
+ p.animspd=4
+ p.s=96
+ p.flip=false
+ p.x=10
+ p.y=10
+ p.w=1
+ p.h=2
+ p.up=0
+ p.g=0.5
+ p.maxfall=-2.5
+ p.xspd=1
+ p.hasitem=0
+ p.jumpspg=6
+
 	palt(0,false)
 	palt(11,true)
 	spawnitems(1)
@@ -62,10 +61,9 @@ function _draw()
 	drawsnow()
 	updatecam()
 	drawlevel(1)
-	p:draw()
 	objects:draw()
-
 	updatecs(cs)
+	p:draw()
 
 	print("cpu "..stat(1),0+camx,0+camy,7)
 end
@@ -86,7 +84,6 @@ function _update()
  	p:move()
  	objects:update()
  	updatesnow()
- 
  end
 end
 -->8
@@ -142,6 +139,13 @@ function p:move()
 
 	if(p:collideright	())p.x=flr(p.x/8)*8
 	if(p:collideleft	())p.x=flr(p.x/8+0x0.ffff)*8 --wizardry for ceil with flr
+
+	if(p.x>=d.x
+		and p.x<=d.x+d.w*8
+		and p.y>=d.y
+		and p.y<=d.y+d.h*8)then
+		cs=1
+	end
 end
 
 function p:lift()
@@ -650,9 +654,9 @@ function updatecs(c)
 	dw=d.w*8+csclk
 	dh=d.h*8+csclk
 		
-	if(c==1)then
+	if(cs==1)then
 		
-		print(c,50,50)
+		print(cs,50,50)
 		csclk+=ticktock
 		if(csclk>duration)then
 			ticktock=-1
@@ -661,8 +665,11 @@ function updatecs(c)
 		if(dw<0)cs=0
 		
 	end
-	if(csclk<0)c=0
-	
+	if(csclk<0)then
+		cs=0
+		csclk=0
+		_init()
+	end
 	sspr(sx,sy,sw,sh,dx,dy,dw,dh)	
 end
 __gfx__
