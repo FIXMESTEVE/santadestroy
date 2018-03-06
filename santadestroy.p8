@@ -662,13 +662,12 @@ function updatecs(c)
 			ticktock=-1
 		end
 		print(csclk,30,30)
-		if(dw<0)cs=0
-		
-	end
-	if(csclk<0)then
-		cs=0
-		csclk=0
-		_init()
+		if(dw<0)then
+			cs=0
+			csclk=0
+			ticktock=1
+			_init()
+		end
 	end
 	sspr(sx,sy,sw,sh,dx,dy,dw,dh)	
 end
